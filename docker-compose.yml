@@ -5,6 +5,4 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      - DOWNLOAD_SECRET=${DOWNLOAD_SECRET:-dy-parser-secret-change-me}
     restart: unless-stopped
