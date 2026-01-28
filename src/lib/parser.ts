@@ -36,17 +36,27 @@ export interface ParsedResult {
   }>
 }
 
-const DOUYIN_SHARE_PATTERN = /^https?:\/\/(v\.douyin\.com|www\.douyin\.com|www\.iesdouyin\.com)\//
+const DOUYIN_URL_REGEX = /https?:\/\/(v\.douyin\.com|www\.douyin\.com|www\.iesdouyin\.com)\/[^\s]+/i
 
-export function isValidShareUrl(url: string): boolean {
-  return DOUYIN_SHARE_PATTERN.test(url.trim())
+export function extractDouyinUrl(text: string): string | null {
+  const match = text.match(DOUYIN_URL_REGEX)
+  return match ? match[0] : null
 }
 
-export async function parseDouyinUrl(shareUrl: string): Promise<ParsedResult> {
-  const url = shareUrl.trim()
+export function isValidShareUrl(url: string): boolean {
+  return DOUYIN_URL_REGEX.test(url.trim())
+}
 
+export async function parseDouyinUrl(input: string): Promise<ParsedResult> {
+  // 从分享文本中提取链接
+  let url = input.trim()
   if (!isValidShareUrl(url)) {
-    throw new Error('不支持的分享链接格式')
+    const extracted = extractDouyinUrl(input)
+    if (extracted) {
+      url = extracted
+    } else {
+      throw new Error('未找到有效的抖音链接')
+    }
   }
 
   const awemeId = await getAwemeId(url)
