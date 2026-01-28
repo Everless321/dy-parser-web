@@ -22,7 +22,7 @@ function isAllowedDomain(url: string): boolean {
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get('url')
   const type = request.nextUrl.searchParams.get('type') || 'video'
-  const mode = request.nextUrl.searchParams.get('mode') || 'download' // download | preview
+  const mode = request.nextUrl.searchParams.get('mode') || 'download'
 
   if (!url) {
     return NextResponse.json({ error: '缺少 url 参数' }, { status: 400 })
@@ -56,15 +56,13 @@ export async function GET(request: NextRequest) {
       headers['Content-Length'] = contentLength
     }
 
-    // 下载模式添加 attachment 头
+    // 下载模式添加 attachment 头，但同样使用流式传输
     if (mode === 'download') {
       const ext = type === 'video' ? 'mp4' : 'jpg'
       headers['Content-Disposition'] = `attachment; filename="douyin_${Date.now()}.${ext}"`
-      const buffer = await response.arrayBuffer()
-      return new NextResponse(buffer, { headers })
     }
 
-    // 预览模式使用流式传输
+    // 统一使用流式传输
     return new NextResponse(response.body, { headers })
   } catch {
     return NextResponse.json({ error: '下载失败' }, { status: 500 })
