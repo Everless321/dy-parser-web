@@ -48,20 +48,23 @@ export function isValidShareUrl(url: string): boolean {
   return DOUYIN_URL_REGEX.test(url.trim())
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-function extractNoWatermarkUrl(video: any): string[] {
-  const bitRate = video.bit_rate || video.bitRate
-  if (Array.isArray(bitRate) && bitRate.length > 0) {
-    const best = bitRate[0]
-    const addr = best.play_addr || best.playAddr
-    if (addr?.url_list?.length) return addr.url_list
-    if (addr?.urlList?.length) return addr.urlList
-  }
+function removeWatermark(url: string): string {
+  return url.replace(/\/playwm\//g, '/play/')
+}
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function extractVideoUrls(video: any): string[] {
   const playAddr = video.playAddr || video.play_addr
   if (!playAddr) return []
-  if (Array.isArray(playAddr) && playAddr[0]?.src) return playAddr.map((p: any) => p.src)
-  return playAddr.url_list || playAddr.urlList || []
+
+  let urls: string[] = []
+  if (Array.isArray(playAddr) && playAddr[0]?.src) {
+    urls = playAddr.map((p: any) => p.src)
+  } else {
+    urls = playAddr.url_list || playAddr.urlList || []
+  }
+
+  return urls.map(removeWatermark)
 }
 
 async function fetchSharePageDetail(awemeId: string) {
@@ -113,7 +116,7 @@ async function fetchSharePageDetail(awemeId: string) {
       const cover = detail.video.cover || detail.video.origin_cover
       result.video = {
         duration: detail.video.duration || 0,
-        playAddr: extractNoWatermarkUrl(detail.video),
+        playAddr: extractVideoUrls(detail.video),
         cover: cover?.urlList || cover?.url_list || [],
       }
     }
